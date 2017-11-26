@@ -6,6 +6,7 @@
 package multex.apresentacao.grafica.telas;
 
 import java.awt.Color;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -22,18 +23,22 @@ import multex.apresentacao.grafica.Reminder;
 public class Principal extends javax.swing.JFrame {
     private boolean memoria;
     private DefaultListModel lista;
+    private DefaultListModel listaEspera;
     private int numeroProcesso;
-    private static Timer t;
+    private Timer t;
+    private boolean travaLock;
      /**
      * Creates new form Principal
      */
     public Principal() {
         initComponents();
         memoria = false;
+        travaLock = false;
         numeroProcesso = 0;
         lista = new DefaultListModel();
+        listaEspera = new DefaultListModel();
         lstProcesso.setModel(lista);
-        
+        lstEspera.setModel(listaEspera);
         
     }
 
@@ -50,6 +55,8 @@ public class Principal extends javax.swing.JFrame {
         btnProcesso1 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstProcesso = new javax.swing.JList<>();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lstEspera = new javax.swing.JList<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -69,56 +76,68 @@ public class Principal extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(lstProcesso);
 
+        lstEspera.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane2.setViewportView(lstEspera);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(68, 68, 68)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(areaCritica, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnProcesso1, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(86, 86, 86)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 308, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(52, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(areaCritica, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnProcesso1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 242, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(119, 119, 119))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(areaCritica, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(141, 141, 141)
-                        .addComponent(btnProcesso1, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(60, 60, 60))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(60, Short.MAX_VALUE))
+                        .addComponent(areaCritica, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(43, 43, 43)
+                        .addComponent(btnProcesso1, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane2))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnProcesso1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProcesso1ActionPerformed
-        if (memoria)
-            return;
+        int n = this.numeroProcesso;
+        numeroProcesso ++;
         ActionListener suaActionListener = new ActionListener() {  
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) { 
-            
-            lista.addElement("Processo "+numeroProcesso+" Consumindo...");
+            public void actionPerformed(java.awt.event.ActionEvent e) {             
+            lista.addElement("Processo "+n+" Finalizou...");
             memoria = false;
             areaCritica.setText("Disponível");
             areaCritica.setForeground(Color.green);
             t.stop();
+            pegaProximo();
+            
         }};
-          
-        t = new Timer((int)(Math.random()*10000), suaActionListener);
-
+        if(memoria || !listaEspera.isEmpty()){
+            listaEspera.addElement("Processo "+(n)+" Aguardando...");
+            return;
+        }
         
-        
-        numeroProcesso ++;
-        lista.addElement("Processo "+numeroProcesso+" Aguardando...");
+        t = new Timer(5000, suaActionListener);
+        //t = new Timer((int)(Math.random()*1000), suaActionListener);
+        lista.addElement("Processo "+n+" Consumindo...");
         memoria = true;
         areaCritica.setText("Ocupado");
         areaCritica.setForeground(Color.red);
@@ -127,9 +146,34 @@ public class Principal extends javax.swing.JFrame {
         
         
     }//GEN-LAST:event_btnProcesso1ActionPerformed
-   
+
+    public void pegaProximo(){
+        if (listaEspera.isEmpty())
+            return;
+        String s = listaEspera.firstElement().toString().replaceAll("Aguardando...", "Consumindo...");
+        lista.addElement(s);
+        listaEspera.remove(0);
 
         
+        ActionListener suaActionListener = new ActionListener() {  
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {             
+            lista.addElement(s.replaceAll("Consumindo...", "Finalizou..."));
+            memoria = false;
+            areaCritica.setText("Disponível");
+            areaCritica.setForeground(Color.green);
+            t.stop();
+            pegaProximo();
+            
+        }};
+        
+        t = new Timer(5000, suaActionListener);
+        //t = new Timer((int)(Math.random()*1000), suaActionListener);
+        memoria = true;
+        areaCritica.setText("Ocupado");
+        areaCritica.setForeground(Color.red);
+        t.start();
+    }
 
     
     /**
@@ -158,6 +202,7 @@ public class Principal extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(Principal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -171,6 +216,8 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JLabel areaCritica;
     private javax.swing.JButton btnProcesso1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JList<String> lstEspera;
     private javax.swing.JList<String> lstProcesso;
     // End of variables declaration//GEN-END:variables
 }
